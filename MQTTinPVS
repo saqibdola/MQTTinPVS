@@ -1,0 +1,358 @@
+
+%% PVS Version 6.0 - International Allegro CL Enterprise Edition 9.0 [Linux (x86)] (Jan 14, 2013 3:16)
+%% 9.0 [Linux (x86)] (Jan 14, 2013 3:16)
+$$$mqqt.pvs
+MQQT[T:Type]: THEORY 
+
+BEGIN
+Time: TYPE = nat
+Data: TYPE+
+t: VAR Time
+N: posnat = 8
+i: VAR below[N]
+%Importing bv[N]
+
+MH: TYPE = [# M: {bvec: bvec[N] | FORALL(i:below[N]): 
+                                    bvec(i)=FALSE},
+               D: sequence[Data]#]
+
+C, S, T1, T2, T3: VAR MH
+
+Deq(C,S): bool= D(C) = D(S)
+Dneq(C,S): bool = D(C) /= D(S)
+
+Send(C,S): bool= M(C)= M(S) & D(C)= D(S)
+
+%Save(Client, Server): bool= Mes(Client)= Mes(Server) & 
+L1:LEMMA Deq(T1,T2) & Deq(T2,T3) => Deq(T1,T3)
+
+L2:LEMMA Send(T1,T2) & Send(T2,T3) => Send(T1,T3)
+
+con_est(C,S): bool = C`M^4 = TRUE & S`M^5= TRUE
+
+Qos0(C,S): bool= con_est(C,S) & Send(C, S) 
+
+Qos3(C,S): bool=  Send(C,S) 
+
+Theorem1: THEOREM Qos0(C,S) => Deq(C,S)
+
+Timer(C,S)(t): RECURSIVE bool= IF t = 0 
+          THEN Send(C,S) & C`M^3 = TRUE 
+          ELSE Timer(C,S)(t-1) ENDIF
+          MEASURE t
+
+Lemma1: LEMMA Timer(C,S)(t)=> Deq(C,S)
+
+Qos1(C,S)(t): INDUCTIVE bool = con_est(C,S) & 
+Send(C,S) & S`M^6 = TRUE & (C`M^6 = FALSE =>  
+Timer(C,S)(t) & S`M^6 = TRUE ) 
+
+Qos2(C,S)(t): INDUCTIVE bool = con_est(C,S) 
+& Send(C,S) & C`M^5^6 = TRUE & 
+S`M^4=TRUE & S`M^5=TRUE & S`M^6 = TRUE &
+(C`M^6 = FALSE => Timer(C,S)(t) & C`M^5^6 = TRUE & 
+S`M^4=TRUE & S`M^5=TRUE & S`M^6 = TRUE)
+
+Theorem2: THEOREM Qos1(C,S)(t) => Deq(C,S)
+
+Theorem3: THEOREM Qos2(C,S)(t) => Deq(C,S)
+
+Lemma2: LEMMA C=S => Send(C,S)
+
+Theorem4: Theorem Qos2(C,S)(t) => Qos1(C,S)(t)
+
+end MQQT
+
+$$$mqqt.prf
+(MQQT
+ (L1 0
+  (L1-1 nil 3739529122
+   ("" (skosimp) (("" (expand "Deq") (("" (assert) nil nil)) nil)) nil)
+   ((Deq const-decl "bool" MQQT nil)) shostak))
+ (L2 0
+  (L2-1 nil 3739529142
+   ("" (skosimp)
+    (("" (expand "Send")
+      (("" (flatten)
+        (("" (split) (("1" (assert) nil nil) ("2" (assert) nil nil))
+          nil))
+        nil))
+      nil))
+    nil)
+   ((Send const-decl "bool" MQQT nil)) shostak))
+ (con_est_TCC1 0
+  (con_est_TCC1-1 nil 3739029413 ("" (subtype-tcc) nil nil)
+   ((N const-decl "posnat" MQQT nil)) nil))
+ (con_est_TCC2 0
+  (con_est_TCC2-1 nil 3739029413 ("" (subtype-tcc) nil nil)
+   ((^ const-decl "bit" bv nil) (N const-decl "posnat" MQQT nil)) nil))
+ (Theorem1 0
+  (Theorem1-1 nil 3739619124
+   ("" (skosimp)
+    (("" (expand "Qos0")
+      (("" (expand "con_est")
+        (("" (expand "Send")
+          (("" (expand "Deq") (("" (flatten) nil nil)) nil)) nil))
+        nil))
+      nil))
+    nil)
+   ((con_est const-decl "bool" MQQT nil)
+    (Deq const-decl "bool" MQQT nil) (Send const-decl "bool" MQQT nil)
+    (Qos0 const-decl "bool" MQQT nil))
+   shostak))
+ (Timer_TCC1 0
+  (Timer_TCC1-1 nil 3739164625 ("" (subtype-tcc) nil nil)
+   ((Send const-decl "bool" MQQT nil) (N const-decl "posnat" MQQT nil))
+   nil))
+ (Timer_TCC2 0
+  (Timer_TCC2-1 nil 3739164625 ("" (subtype-tcc) nil nil)
+   ((boolean nonempty-type-decl nil booleans nil)
+    (bool nonempty-type-eq-decl nil booleans nil)
+    (NOT const-decl "[bool -> bool]" booleans nil)
+    (number nonempty-type-decl nil numbers nil)
+    (number_field_pred const-decl "[number -> boolean]" number_fields
+     nil)
+    (number_field nonempty-type-from-decl nil number_fields nil)
+    (real_pred const-decl "[number_field -> boolean]" reals nil)
+    (real nonempty-type-from-decl nil reals nil)
+    (>= const-decl "bool" reals nil)
+    (rational_pred const-decl "[real -> boolean]" rationals nil)
+    (rational nonempty-type-from-decl nil rationals nil)
+    (integer_pred const-decl "[rational -> boolean]" integers nil)
+    (int nonempty-type-eq-decl nil integers nil)
+    (Time type-eq-decl nil MQQT nil)
+    (int_minus_int_is_int application-judgement "int" integers nil)
+    (real_ge_is_total_order name-judgement "(total_order?[real])"
+     real_props nil))
+   nil))
+ (Timer_TCC3 0
+  (Timer_TCC3-1 nil 3739164625 ("" (termination-tcc) nil nil) nil nil))
+ (Lemma1 0
+  (Lemma1-1 nil 3739165341
+   ("" (induct "t")
+    (("1" (skosimp)
+      (("1" (expand "Timer")
+        (("1" (expand "Send")
+          (("1" (expand "Deq") (("1" (assert) nil nil)) nil)) nil))
+        nil))
+      nil)
+     ("2" (skosimp*)
+      (("2" (inst -1 "C!1" "S!1")
+        (("2" (assert)
+          (("2" (expand "Timer") (("2" (propax) nil nil)) nil)) nil))
+        nil))
+      nil))
+    nil)
+   ((number nonempty-type-decl nil numbers nil)
+    (boolean nonempty-type-decl nil booleans nil)
+    (number_field_pred const-decl "[number -> boolean]" number_fields
+     nil)
+    (number_field nonempty-type-from-decl nil number_fields nil)
+    (real_pred const-decl "[number_field -> boolean]" reals nil)
+    (real nonempty-type-from-decl nil reals nil)
+    (rational_pred const-decl "[real -> boolean]" rationals nil)
+    (rational nonempty-type-from-decl nil rationals nil)
+    (integer_pred const-decl "[rational -> boolean]" integers nil)
+    (int nonempty-type-eq-decl nil integers nil)
+    (bool nonempty-type-eq-decl nil booleans nil)
+    (>= const-decl "bool" reals nil)
+    (nat nonempty-type-eq-decl nil naturalnumbers nil)
+    (pred type-eq-decl nil defined_types nil)
+    (Time type-eq-decl nil MQQT nil)
+    (Data nonempty-type-decl nil MQQT nil)
+    (sequence type-eq-decl nil sequences nil)
+    (< const-decl "bool" reals nil)
+    (nonneg_int nonempty-type-eq-decl nil integers nil)
+    (> const-decl "bool" reals nil)
+    (posnat nonempty-type-eq-decl nil integers nil)
+    (N const-decl "posnat" MQQT nil)
+    (below type-eq-decl nil naturalnumbers nil)
+    (bit type-eq-decl nil bit nil) (bvec type-eq-decl nil bv nil)
+    (below type-eq-decl nil nat_types nil)
+    (= const-decl "[T, T -> boolean]" equalities nil)
+    (FALSE const-decl "bool" booleans nil)
+    (MH type-eq-decl nil MQQT nil)
+    (IMPLIES const-decl "[bool, bool -> bool]" booleans nil)
+    (Timer def-decl "bool" MQQT nil) (Deq const-decl "bool" MQQT nil)
+    (nat_induction formula-decl nil naturalnumbers nil)
+    (nnint_plus_posint_is_posint application-judgement "posint"
+     integers nil)
+    (Send const-decl "bool" MQQT nil)
+    (int_minus_int_is_int application-judgement "int" integers nil))
+   shostak))
+ (Qos1_TCC1 0
+  (Qos1_TCC1-1 nil 3738992961 ("" (subtype-tcc) nil nil)
+   ((Send const-decl "bool" MQQT nil) (^ const-decl "bit" bv nil)
+    (con_est const-decl "bool" MQQT nil)
+    (N const-decl "posnat" MQQT nil))
+   nil))
+ (Qos2_TCC1 0
+  (Qos2_TCC1-1 nil 3738992961 ("" (subtype-tcc) nil nil)
+   ((Send const-decl "bool" MQQT nil) (^ const-decl "bit" bv nil)
+    (con_est const-decl "bool" MQQT nil)
+    (N const-decl "posnat" MQQT nil))
+   nil))
+ (Qos2_TCC2 0
+  (Qos2_TCC2-1 nil 3738992961 ("" (subtype-tcc) nil nil)
+   ((Send const-decl "bool" MQQT nil) (^ const-decl "bit" bv nil)
+    (con_est const-decl "bool" MQQT nil))
+   nil))
+ (Theorem2 0
+  (Theorem2-1 nil 3739619530
+   ("" (skosimp)
+    (("" (expand "Qos1")
+      (("" (expand "Deq")
+        (("" (expand "con_est")
+          (("" (flatten)
+            (("" (expand "Send")
+              (("" (use "Lemma1") (("" (assert) nil nil)) nil)) nil))
+            nil))
+          nil))
+        nil))
+      nil))
+    nil)
+   ((Deq const-decl "bool" MQQT nil) (Lemma1 formula-decl nil MQQT nil)
+    (Time type-eq-decl nil MQQT nil) (MH type-eq-decl nil MQQT nil)
+    (FALSE const-decl "bool" booleans nil)
+    (= const-decl "[T, T -> boolean]" equalities nil)
+    (below type-eq-decl nil nat_types nil)
+    (bvec type-eq-decl nil bv nil) (bit type-eq-decl nil bit nil)
+    (below type-eq-decl nil naturalnumbers nil)
+    (N const-decl "posnat" MQQT nil)
+    (posnat nonempty-type-eq-decl nil integers nil)
+    (> const-decl "bool" reals nil)
+    (nonneg_int nonempty-type-eq-decl nil integers nil)
+    (< const-decl "bool" reals nil)
+    (nat nonempty-type-eq-decl nil naturalnumbers nil)
+    (>= const-decl "bool" reals nil)
+    (bool nonempty-type-eq-decl nil booleans nil)
+    (int nonempty-type-eq-decl nil integers nil)
+    (integer_pred const-decl "[rational -> boolean]" integers nil)
+    (rational nonempty-type-from-decl nil rationals nil)
+    (rational_pred const-decl "[real -> boolean]" rationals nil)
+    (real nonempty-type-from-decl nil reals nil)
+    (real_pred const-decl "[number_field -> boolean]" reals nil)
+    (number_field nonempty-type-from-decl nil number_fields nil)
+    (number_field_pred const-decl "[number -> boolean]" number_fields
+     nil)
+    (boolean nonempty-type-decl nil booleans nil)
+    (number nonempty-type-decl nil numbers nil)
+    (sequence type-eq-decl nil sequences nil)
+    (Data nonempty-type-decl nil MQQT nil)
+    (Send const-decl "bool" MQQT nil)
+    (con_est const-decl "bool" MQQT nil)
+    (Qos1 inductive-decl "bool" MQQT nil))
+   shostak))
+ (Theorem3 0
+  (Theorem3-1 nil 3739690918
+   ("" (skosimp)
+    (("" (expand "Qos2")
+      (("" (expand "Deq")
+        (("" (expand "con_est")
+          (("" (flatten)
+            (("" (expand "Send")
+              (("" (expand "b2n")
+                (("" (use "Lemma1") (("" (assert) nil nil)) nil)) nil))
+              nil))
+            nil))
+          nil))
+        nil))
+      nil))
+    nil)
+   ((Qos2 inductive-decl "bool" MQQT nil)
+    (con_est const-decl "bool" MQQT nil)
+    (Send const-decl "bool" MQQT nil)
+    (Lemma1 formula-decl nil MQQT nil) (Time type-eq-decl nil MQQT nil)
+    (MH type-eq-decl nil MQQT nil)
+    (FALSE const-decl "bool" booleans nil)
+    (= const-decl "[T, T -> boolean]" equalities nil)
+    (below type-eq-decl nil nat_types nil)
+    (bvec type-eq-decl nil bv nil) (bit type-eq-decl nil bit nil)
+    (below type-eq-decl nil naturalnumbers nil)
+    (N const-decl "posnat" MQQT nil)
+    (posnat nonempty-type-eq-decl nil integers nil)
+    (> const-decl "bool" reals nil)
+    (nonneg_int nonempty-type-eq-decl nil integers nil)
+    (< const-decl "bool" reals nil)
+    (nat nonempty-type-eq-decl nil naturalnumbers nil)
+    (>= const-decl "bool" reals nil)
+    (bool nonempty-type-eq-decl nil booleans nil)
+    (int nonempty-type-eq-decl nil integers nil)
+    (integer_pred const-decl "[rational -> boolean]" integers nil)
+    (rational nonempty-type-from-decl nil rationals nil)
+    (rational_pred const-decl "[real -> boolean]" rationals nil)
+    (real nonempty-type-from-decl nil reals nil)
+    (real_pred const-decl "[number_field -> boolean]" reals nil)
+    (number_field nonempty-type-from-decl nil number_fields nil)
+    (number_field_pred const-decl "[number -> boolean]" number_fields
+     nil)
+    (boolean nonempty-type-decl nil booleans nil)
+    (number nonempty-type-decl nil numbers nil)
+    (sequence type-eq-decl nil sequences nil)
+    (Data nonempty-type-decl nil MQQT nil)
+    (b2n const-decl "nbit" bit nil) (Deq const-decl "bool" MQQT nil))
+   shostak))
+ (Lemma2 0
+  (Lemma2-1 nil 3739187063
+   ("" (skosimp)
+    (("" (expand "Send")
+      (("" (split) (("1" (assert) nil nil) ("2" (assert) nil nil))
+        nil))
+      nil))
+    nil)
+   ((Send const-decl "bool" MQQT nil)) shostak))
+ (Theorem4 0
+  (Theorem4-1 nil 3739620126
+   ("" (skosimp)
+    (("" (expand "Qos2")
+      (("" (expand "Qos1")
+        (("" (expand "Send")
+          (("" (expand "con_est")
+            (("" (expand "Timer")
+              (("" (expand "b2n")
+                (("" (use "Lemma2")
+                  (("" (flatten) (("" (assert) nil nil)) nil)) nil))
+                nil))
+              nil))
+            nil))
+          nil))
+        nil))
+      nil))
+    nil)
+   ((Qos2 inductive-decl "bool" MQQT nil)
+    (Send const-decl "bool" MQQT nil)
+    (int_minus_int_is_int application-judgement "int" integers nil)
+    (Timer def-decl "bool" MQQT nil) (Lemma2 formula-decl nil MQQT nil)
+    (MH type-eq-decl nil MQQT nil)
+    (FALSE const-decl "bool" booleans nil)
+    (= const-decl "[T, T -> boolean]" equalities nil)
+    (below type-eq-decl nil nat_types nil)
+    (bvec type-eq-decl nil bv nil) (bit type-eq-decl nil bit nil)
+    (below type-eq-decl nil naturalnumbers nil)
+    (N const-decl "posnat" MQQT nil)
+    (posnat nonempty-type-eq-decl nil integers nil)
+    (> const-decl "bool" reals nil)
+    (nonneg_int nonempty-type-eq-decl nil integers nil)
+    (< const-decl "bool" reals nil)
+    (nat nonempty-type-eq-decl nil naturalnumbers nil)
+    (>= const-decl "bool" reals nil)
+    (bool nonempty-type-eq-decl nil booleans nil)
+    (int nonempty-type-eq-decl nil integers nil)
+    (integer_pred const-decl "[rational -> boolean]" integers nil)
+    (rational nonempty-type-from-decl nil rationals nil)
+    (rational_pred const-decl "[real -> boolean]" rationals nil)
+    (real nonempty-type-from-decl nil reals nil)
+    (real_pred const-decl "[number_field -> boolean]" reals nil)
+    (number_field nonempty-type-from-decl nil number_fields nil)
+    (number_field_pred const-decl "[number -> boolean]" number_fields
+     nil)
+    (boolean nonempty-type-decl nil booleans nil)
+    (number nonempty-type-decl nil numbers nil)
+    (sequence type-eq-decl nil sequences nil)
+    (Data nonempty-type-decl nil MQQT nil)
+    (nat_exp application-judgement "nat" exponentiation nil)
+    (b2n const-decl "nbit" bit nil)
+    (con_est const-decl "bool" MQQT nil)
+    (Qos1 inductive-decl "bool" MQQT nil))
+   shostak)))
+
